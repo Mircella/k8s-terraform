@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kill-my-cpu
+  labels:
+    app: kill-my-cpu
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: kill-my-cpu
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: kill-my-cpu
+        version: v1.0.0
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9101"
+    spec:
+      containers:
+      - name: kill-my-cpu
+        image: matix26/kill_cpu_app:killapp
+        ports:
+        - name: http
+          containerPort: 80
+        - name: probe
+          containerPort: 8086
+        env:
+        - name: VERSION
+          value: v1.0.0
+        livenessProbe:
+          httpGet:
+            path: /live
+            port: probe
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: probe
+          periodSeconds: 5
